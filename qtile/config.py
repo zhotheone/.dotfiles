@@ -7,7 +7,7 @@
 # Copyright (c) 2013 Tao Sauvage
 
 
-from libqtile import bar, layout, widget, hook, qtile
+from libqtile import bar, layout, widget, hook, qtile, extension
 from libqtile.config import Click, Drag, Group, ScratchPad, DropDown, Key, Match, Screen
 from libqtile.lazy import lazy
 
@@ -20,54 +20,53 @@ startsc = home + "/.config/qtile/start.sh"
 mod = "mod4"
 terminal = "kitty"
 rofi = "rofi -show drun"
-screenshot = "flameshot gui --clipboard"
+screenshot_gui = "flameshot gui --clipboard"
+screenshot_full = "flameshot full --clipboard"
 ee = "easyeffects"
+pv = home + "/.config/qtile/mpv.sh"
+volmute = home + "/.config/qtile/vol.sh mute"
+volup = home + "/.config/qtile/vol.sh up"
+voldown = home + "/.config/qtile/vol.sh down"
 
 @hook.subscribe.startup_once
 def autostart():
     subprocess.Popen([startsc])
 
 keys = [
-    # A list of available commands that can be bound to keys can be found
-    # at https://docs.qtile.org/en/latest/manual/config/lazy.html
-    # Switch between windows
-    Key([mod], "h", lazy.layout.left(), desc="Move focus to left"),
-    Key([mod], "l", lazy.layout.right(), desc="Move focus to right"),
-    Key([mod], "j", lazy.layout.down(), desc="Move focus down"),
-    Key([mod], "k", lazy.layout.up(), desc="Move focus up"),
     Key([mod], "space", lazy.layout.next(), desc="Move window focus to other window"),
-    # Move windows between left/right columns or move up/down in current stack.
-    # Moving out of range in Columns layout will create new column.
+
     Key([mod, "shift"], "h", lazy.layout.shuffle_left(), desc="Move window to the left"),
     Key([mod, "shift"], "l", lazy.layout.shuffle_right(), desc="Move window to the right"),
     Key([mod, "shift"], "j", lazy.layout.shuffle_down(), desc="Move window down"),
     Key([mod, "shift"], "k", lazy.layout.shuffle_up(), desc="Move window up"),
-    # Grow windows. If current window is on the edge of screen and direction
-    # will be to screen edge - window would shrink.
+
     Key([mod, "control"], "h", lazy.layout.grow_left(), desc="Grow window to the left"),
     Key([mod, "control"], "l", lazy.layout.grow_right(), desc="Grow window to the right"),
     Key([mod, "control"], "j", lazy.layout.grow_down(), desc="Grow window down"),
     Key([mod, "control"], "k", lazy.layout.grow_up(), desc="Grow window up"),
+
     Key([mod], "n", lazy.layout.normalize(), desc="Reset all window sizes"),
-    # Toggle between split and unsplit sides of stack.
-    # Split = all windows displayed
-    # Unsplit = 1 window displayed, like Max layout, but still with
-    # multiple stack panes
-    Key(
-        [mod, "shift"],
-        "Return",
-        lazy.layout.toggle_split(),
-        desc="Toggle between split and unsplit sides of stack",
-    ),
     Key([mod], "Return", lazy.spawn(terminal), desc="Launch terminal"),
     Key([mod], "d", lazy.spawn(rofi), desc="Launch rofi -drun"),
-    # Toggle between different layouts as defined below
+
     Key([mod], "Tab", lazy.next_layout(), desc="Toggle between layouts"),
     Key([mod], "q", lazy.window.kill(), desc="Kill focused window"),
     Key([mod, "shift"], "r", lazy.reload_config(), desc="Reload the config"),
     Key([mod, "control"], "q", lazy.shutdown(), desc="Shutdown Qtile"),
     Key([mod], "r", lazy.spawncmd(), desc="Spawn a command using a prompt widget"),
-    Key([mod], "Print", lazy.spawn(screenshot), desc="Take screenshot"),
+    Key([mod], "p", lazy.spawn(pv), desc="Play a video through mpv"),
+    Key([mod], 's', lazy.spawn(screenshot_gui), desc="Screenshot to clipboard"),
+    Key([], "XF86AudioMute", lazy.spawn(volmute), desc="Toggle mute"),
+    Key([], "XF86AudioLowerVolume", lazy.spawn(voldown), desc="Lower volume"),
+    Key([], "XF86AudioRaiseVolume", lazy.spawn(volup), desc="Raise volume"),
+    Key([mod], 'backspace', lazy.run_extension(extension.CommandSet(
+    commands={
+        'Suspend': 'systemctl suspend',
+        'Reboot': 'systemctl reboot',
+        'Shutdown': 'systemctl poweroff',
+        'Log-out': 'loginctl terminate-session ${XDG_SESSION_ID-}',
+        },
+    ))),
 ]
 
 groups = [Group(i) for i in "123456789"]
@@ -180,8 +179,9 @@ def init_widgets_list(monitor_num):
                 ),
                 widget.Sep(linewidth=1, padding=10, foreground=colors[4], background=colors[0]),
                 widget.TaskList(
-                        icon_size = 17,
+                        icon_size = 0,
                         font = "FiraCode Nerd Regular",
+                        fontsize = 16,
                         foreground = colors[8],
                         background = colors[0],
                         borderwidth = 0,
@@ -192,16 +192,6 @@ def init_widgets_list(monitor_num):
                         title_width_method = "uniform",
                         rounded = False,
                 ),
-                widget.Sep(linewidth=1, padding=10, foreground=colors[4], background=colors[0]),
-                widget.TextBox(text = "󰕾", fontsize=14, foreground=colors[8]),
-                widget.Volume(
-                        foreground = colors[4],
-                        padding = 10,
-                        volume_app = 'pipewire',
-                        get_volume_command = 'pw-volume status',
-                        volume_up_command = 'pw-volume change +5%',
-                        volume_down_command = 'pw-volume change -5%', 
-                        ), 
                 widget.Sep(linewidth=1, padding=10, foreground=colors[4], background=colors[0]),
                 widget.TextBox(text = "", fontsize=14, foreground=colors[8]),
                 widget.CPU(
@@ -222,18 +212,17 @@ def init_widgets_list(monitor_num):
                 widget.TextBox(text = "󰍛", fontsize=14, foreground=colors[8]),
                 widget.Clock(
                         fomat = "%I:%M %p",
-                        padding = 10,
+                        padding = 8,
                         foreground = colors[6],
                         ),
                 widget.Sep(linewidth=1, padding=10, foreground=colors[4], background=colors[0]),
-                widget.CurrentLayoutIcon(scale=0.5, foreground=colors[8], background=colors[7]),
                 ]
     return widgets_list
 
 widgets_list = init_widgets_list('1')
 
 screens = [
-        Screen(top=bar.Bar(widgets=widgets_list, size=20, background=colors[0], margin=2, opacity=0.8))
+        Screen(top=bar.Bar(widgets=widgets_list, size=25, background=colors[0], margin=0, opacity=1))
         ]
 
 # Drag floating layouts.

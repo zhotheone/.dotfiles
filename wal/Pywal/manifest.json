@@ -7,17 +7,17 @@
           "theme_ntp_background" : "images/theme_ntp_background_norepeat.png"
         },
         "colors": {
-          "frame": [15, 13, 21],
-          "frame_inactive": [15, 13, 21],
-          "toolbar": [221, 175, 111],
-          "ntp_text": [230, 208, 207],
-          "ntp_link": [221, 175, 111],
-          "ntp_section": [161, 145, 144],
-          "button_background": [230, 208, 207],
-          "toolbar_button_icon": [230, 208, 207],
-          "toolbar_text": [230, 208, 207],
-          "omnibox_background": [15, 13, 21],
-          "omnibox_text": [230, 208, 207]
+          "frame": [28, 10, 26],
+          "frame_inactive": [28, 10, 26],
+          "toolbar": [100, 83, 154],
+          "ntp_text": [179, 199, 216],
+          "ntp_link": [100, 83, 154],
+          "ntp_section": [125, 139, 151],
+          "button_background": [179, 199, 216],
+          "toolbar_button_icon": [179, 199, 216],
+          "toolbar_text": [179, 199, 216],
+          "omnibox_background": [28, 10, 26],
+          "omnibox_text": [179, 199, 216]
         },
         "properties": {
           "ntp_background_alignment": "bottom"
